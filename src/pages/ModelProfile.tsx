@@ -218,8 +218,13 @@ export default function ModelProfile() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const cityParam = params.get('city');
-    const nameParam = params.get('name');
+    let cityParam = params.get('city');
+    let nameParam = params.get('name');
+
+    if (!cityParam || !nameParam) {
+      cityParam = 'sg';
+      nameParam = 'Mai Linh';
+    }
 
     setCity(cityParam);
     setModelName(nameParam);
