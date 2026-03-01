@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface CitySectionProps {
   id: string;
@@ -24,13 +24,14 @@ const models = [
 ];
 
 export default function CitySection({ id, cityLabel, cityName, cityNameItalic, cityKey }: CitySectionProps) {
+  const dragStateRef = useRef({ isDown: false, startX: 0, scrollLeft: 0 });
+
   useEffect(() => {
     const track = document.getElementById(`track-${cityKey}`);
     if (!track) return;
 
     track.innerHTML = models.map((model, index) => {
       const rank = index < 3 ? index + 1 : 0;
-      const vipClass = model.vip ? 'vip' : '';
       const rankClass = rank > 0 ? `rank-${rank}` : '';
 
       return `
@@ -66,6 +67,44 @@ export default function CitySection({ id, cityLabel, cityName, cityNameItalic, c
         </div>
       `;
     }).join('');
+
+    const handleMouseDown = (e: MouseEvent) => {
+      dragStateRef.current.isDown = true;
+      dragStateRef.current.startX = e.pageX - track.offsetLeft;
+      dragStateRef.current.scrollLeft = track.scrollLeft;
+      track.style.cursor = 'grabbing';
+    };
+
+    const handleMouseUp = () => {
+      dragStateRef.current.isDown = false;
+      track.style.cursor = 'grab';
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!dragStateRef.current.isDown) return;
+      e.preventDefault();
+      const x = e.pageX - track.offsetLeft;
+      const walk = (x - dragStateRef.current.startX) * 1.5;
+      track.scrollLeft = dragStateRef.current.scrollLeft - walk;
+    };
+
+    const handleMouseLeave = () => {
+      dragStateRef.current.isDown = false;
+      track.style.cursor = 'grab';
+    };
+
+    track.addEventListener('mousedown', handleMouseDown);
+    track.addEventListener('mouseup', handleMouseUp);
+    track.addEventListener('mousemove', handleMouseMove);
+    track.addEventListener('mouseleave', handleMouseLeave);
+    track.style.cursor = 'grab';
+
+    return () => {
+      track.removeEventListener('mousedown', handleMouseDown);
+      track.removeEventListener('mouseup', handleMouseUp);
+      track.removeEventListener('mousemove', handleMouseMove);
+      track.removeEventListener('mouseleave', handleMouseLeave);
+    };
   }, [cityKey]);
 
   const handleSlide = (direction: number) => {
